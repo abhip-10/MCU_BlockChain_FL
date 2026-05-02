@@ -1,0 +1,9 @@
+cryptography>=42.0
+numpy>=1.26
+matplotlib>=3.8
+networkx>=3.2
+pandas>=2.1
+scipy>=1.12
+pytest>=8.0
+paho-mqtt>=2.0
+influxdb-client>=1.40
