@@ -14,6 +14,9 @@ build/
 results/*.png
 results/*.csv
 
+# Claude Code
+.claude/
+
 # IDE
 .vscode/
 .idea/
