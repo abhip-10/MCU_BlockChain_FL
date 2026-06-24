@@ -1,0 +1,58 @@
+\chapter{Introduction}
+
+\section{Introduction}
+
+First responders operating in infrastructure-denied environments—burning structures, collapsed buildings, remote terrain, or contested urban zones—depend on communication and monitoring systems designed for normal conditions. When those conditions collapse, so do the systems. The 9/11 World Trade Center communications failure, in which 343 firefighters perished partly because their radios were incompatible with police channels \cite{NIST_9_11_comms}, and Hurricane Katrina in 2005, where the loss of cell towers paralysed coordinated rescue for 60,000 stranded survivors \cite{AFCEA_Katrina_comms}, illustrate a persistent architectural failure: centralised, infrastructure-dependent designs are most vulnerable precisely when they are most needed.
+
+This project proposes a fundamentally different architecture. Each responder carries a self-contained wearable node built on the ESP32-C3 microcontroller and Semtech SX1276 LoRa transceiver that participates in a peer-to-peer mesh network requiring no pre-existing infrastructure. Every node runs a lightweight SHA-256 Proof-of-Authority (PoA) blockchain that creates a cryptographically verifiable, tamper-evident log of sensor events. A Federated Averaging (FedAvg) layer trains an on-device logistic regression anomaly detector collaboratively across all nodes by exchanging gradient weight vectors rather than raw biometric data, protecting physiological privacy while enabling collective learning.
+
+The technical novelty lies in the co-design of all three layers—LoRa mesh, on-device blockchain, and over-the-air federated learning—on commodity microcontroller hardware under strict power, memory (320~KB SRAM), and bandwidth constraints (37.5~kbps maximum physical-layer throughput). The system is validated against a hybrid testbed combining physical ESP32-C3 nodes with software-simulated virtual nodes connected via an MQTT bridge, enabling performance characterisation at network scales impractical to instrument purely in hardware.
+
+\section{Problem Statement}
+
+The fundamental problem is the absence of a low-cost, infrastructure-independent, tamper-resistant wearable network that can provide real-time physiological monitoring, secure data logging, and distributed anomaly detection for first-responder teams where conventional communications infrastructure is unavailable.
+
+Three distinct gaps drive this work:
+
+\textbf{(1) Infrastructure dependency.} Existing wearable platforms conforming to NIST IR 8235 \cite{NIST_IR_8235} rely on cellular data or proprietary radio protocols requiring fixed base stations. When infrastructure is destroyed—exactly when monitoring is most critical—monitoring capability is lost.
+
+\textbf{(2) Data integrity.} Sensor data stored on centralised servers is vulnerable to corruption and tampering. In forensic contexts (determining whether a responder's vitals were safe before entering a collapse zone), integrity must be provable without relying on any single custodian. Existing blockchain implementations target high-bandwidth, unconstrained environments; running one on a microcontroller with 320~KB SRAM over a 37.5~kbps radio requires a purpose-designed approach \cite{Semtech_SX1276_datasheet}.
+
+\textbf{(3) Biometric privacy.} Heart rate, SpO2, and fall events are sensitive health data. Centralising them creates a single point of failure for privacy. Federated Learning ensures raw sensor readings never leave the node, but transmitting weight vectors over the low-bandwidth, variable-latency LoRa channel introduces engineering constraints that existing WiFi-centric FL frameworks do not address.
+
+\section{Motivation}
+
+The International Labour Organization estimates 2.3 million occupational fatalities annually, with emergency workers disproportionately represented \cite{ILO_safety_stats}. The NFPA reported 136 on-duty firefighter deaths in the United States in 2021 alone \cite{NFPA_2021_firefighter}; post-incident reviews consistently cite delayed physiological awareness as a contributing factor. Commercial PASS devices detect motion cessation and emit an audible alarm but provide no physiological data, no network communication, and no position fix \cite{IEEE_PST_wearables}.
+
+Three concurrent technology developments now make the proposed architecture feasible. First, the SX1276 LoRa transceiver achieves link budgets exceeding 155~dB with sub-100~mW power, enabling reliable links at 200--1000~m in urban and forested environments \cite{Semtech_SX1276_datasheet}. Second, peer-to-peer LoRa mesh has been demonstrated for mountain rescue and industrial safety without any gateway dependency \cite{LoRa_mesh_rescue_2024}. Third, the ESP32-C3 executes SHA-256 via mbedTLS in under 2~ms per block, making on-device blockchain viable within a 5-second sensor reporting cycle.
+
+Existing alternatives are inadequate. FirstNet, the US public safety LTE network, loses coverage when cell towers are destroyed \cite{Preprints_FirstNet_5G_review}—as demonstrated in the 2019--2020 Australian bushfires where large areas lost all cellular connectivity for days. Iridium and Globalstar satellite options carry prohibitive per-device cost and latency. P25 and TETRA land mobile radio systems do not carry physiological sensor data or provide cryptographic data integrity. The FL motivation is similarly specific: centralised aggregation of health data is vulnerable to gradient inversion attacks even when data is encrypted in transit \cite{FL_privacy_threats_survey_2024}, while FedAvg with differential privacy provides a rigorous bound on per-individual information leakage \cite{FL_DP_McMahan2018}.
+
+\section{Objectives}
+
+\begin{enumerate}
+    \item Integrate MPU6050 IMU, MAX30102 PPG sensor, and SX1276 LoRa transceiver on the ESP32-C3 for concurrent fall detection, heart rate, and SpO2 measurement.
+    \item Implement SHA-256 PoA blockchain directly on the ESP32-C3 within the 320~KB SRAM constraint.
+    \item Establish reliable bidirectional LoRa P2P communication between nodes with per-block hash verification.
+    \item Implement FedAvg with Gaussian DP noise over LoRa and demonstrate weight convergence in a bounded number of rounds.
+    \item Implement two-phase fall detection and SpO2/HR anomaly alerting with blockchain-logged, LoRa-propagated alert blocks.
+    \item Develop a Python simulation (Gudmundson channel model, blockchain, FL) for up to 20 nodes and validate against hardware measurements via MQTT bridge.
+\end{enumerate}
+
+\section{Brief Methodology of the Project}
+
+The project follows a milestone-driven methodology: five software simulation milestones (M1--M5) completed prior to hardware procurement, followed by six hardware milestones (M6--M11) building toward full system integration.
+
+\textbf{Simulation phase (M1--M5):} M1 models the SX1276 physical layer with Gudmundson log-normal shadowing to replicate empirical PDR curves. M2 implements a Python SHA-256 hash chain providing ground-truth hashes for firmware verification. M3 processes UCI HAR accelerometer data \cite{UCI_HAR_dataset} for fall detection algorithm development. M4 implements FedAvg with Gaussian DP noise, demonstrating L2-norm convergence across simulated nodes. M5 exercises the full system at 5, 10, and 20 nodes, characterising blockchain propagation latency and FL convergence rate as a function of network size.
+
+\textbf{Hardware phase (M6--M11):} M6 verifies sensor initialisation and valid readings. M7 establishes bidirectional LoRa block exchange with SHA-256 hash verification. M8 exercises multi-block hash chain and prevHash linkage against the Python simulation. M9 implements FedAvg weight exchange on hardware with convergence demonstration. M10 tests the full operational loop including a 10-minute soak test for heap stability. M11 connects physical nodes to the Python simulation mesh via USB-serial JSON bridge and Mosquitto MQTT, verifying three-way chain hash agreement.
+
+\section{Key Contributions}
+
+\begin{itemize}
+\item First simultaneous co-integration of SHA-256 PoA blockchain and FedAvg over a LoRa P2P radio on a commodity ESP32-C3 (320~KB SRAM).
+\item Airtime-aware TDMA-scheduled FL protocol accounting for the 1.8-second channel occupancy of a 124-byte LoRa block at SF10/BW125.
+\item Hybrid MQTT testbed enabling physical ESP32 nodes and Python-simulated virtual nodes to participate in the same mesh as first-class peers.
+\end{itemize}
+
+The remainder of this report is organised as follows: Chapter~2 surveys the literature and theoretical foundations; Chapter~3 presents system design; Chapter~4 covers implementation; Chapter~5 reports results; Chapter~6 concludes.

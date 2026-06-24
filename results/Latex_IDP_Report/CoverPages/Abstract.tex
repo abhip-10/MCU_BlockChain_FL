@@ -1,0 +1,12 @@
+\addcontentsline{toc}{chapter}{Abstract}\vspace{-1cm}
+%Border
+\begin{tikzpicture}[remember picture, overlay]
+  \draw[line width = 4pt] ($(current page.north west) + (0.75in,-0.75in)$) rectangle ($(current page.south east) + (-0.75in,0.75in)$);
+\end{tikzpicture}
+
+Dysarthria is a motor speech disorder caused by neurological conditions such as ALS, cerebral palsy, Parkinson’s disease, and stroke. It affects speech muscles, resulting in slurred or slow speech that can be difficult to understand. Severity varies widely and can significantly impact communication. Traditional methods of assessing and treating dysarthria often involve in-person evaluations and therapy sessions, which can be time-consuming and may not be accessible to all patients. Globally, millions of people suffer from speech impairments, yet most speech technologies are trained only on normal speech. Highlighting the need for more efficient, technology-driven solutions. This report presents a novel system that leverages advanced techniques to improve accessibility and communication for individuals with dysarthria.
+
+The objectives of this work is to generate synthetic dysarthric speech using Text-to-Speech (TTS) and GAN-based voice conversion techniques and to develop a post-ASR semantic correction layer utilizing large language models for improved transcription accuracy which enhances system robustness through noise augmentation and advanced acoustic feature extraction methods. We finally wish to integrate a Personal Knowledge Graph to support contextual speech disambiguation
+
+We were able to achieve a significant improvement in the accuracy of dysarthric speech recognition by implementing a novel architecture that combines advanced acoustic feature extraction methods with a post-ASR semantic correction in the layers of whispher model by openai. The system was trained and evaluated using a dataset of dysarthric speech samples, and we observed a sub 20\% WER in transcription accuracy which is better compared to previous approaches. The integration of a Personal Knowledge Graph for contextual speech disambiguation further enhanced the system's performance, particularly in noisy environments.  
+\pagebreak

@@ -1,0 +1,90 @@
+\chapter{Implementation Details}
+
+This chapter describes the practical implementation of the proposed system, including the firmware for the physical ESP32 nodes and the software environment for the virtual node simulation.
+
+\section{Hardware Implementation: ESP32 Firmware}
+
+The firmware for the physical nodes is developed using the Arduino framework in C++. It manages sensor data acquisition, blockchain operations, and LoRa communication.
+
+\subsection{Cryptographic Implementation}
+To ensure security on resource-constrained hardware:
+\begin{itemize}
+\item \textbf{SHA-256}: Implemented using the mbedTLS library provided by the ESP-IDF.
+\item \textbf{ECDSA}: The Micro-ECC library is used for Elliptic Curve Digital Signature Algorithm (P-256 curve) to sign blocks.
+\end{itemize}
+
+\subsection{Blockchain Persistence}
+The blockchain ledger is persisted in the ESP32's onboard flash memory using the Serial Peripheral Interface Flash File System (SPIFFS). This ensures that the chain state is maintained across device reboots.
+
+\subsection{Sensor Data Acquisition}
+Sensors are sampled periodically:
+\begin{itemize}
+\item \textbf{MPU6050}: Sampled at 100 Hz to detect falls and motion patterns.
+\item \textbf{MAX30102}: Interfaced via I2C to obtain PPG signals for HR and SpO2 calculation.
+\item \textbf{GPS}: NMEA sentences are parsed to obtain latitude, longitude, and altitude.
+\end{itemize}
+
+\section{Simulation Environment: Python Testbed}
+
+The simulation environment is built to exercise the system's logic at scale. It replicates the behavior of the physical nodes in a virtual space.
+
+\subsection{Software Stack}
+\begin{itemize}
+\item \textbf{Language}: Python 3.9+.
+\item \textbf{Numerical Libraries}: \texttt{NumPy} and \texttt{SciPy} for matrix operations and statistical modeling.
+\item \textbf{Cryptography}: The \texttt{cryptography} library for ECDSA and SHA-256 operations.
+\item \textbf{Visualization}: \texttt{Matplotlib} and \texttt{Seaborn} for generating performance graphs.
+\end{itemize}
+
+\subsection{LoRa Physical Layer Modeling}
+The simulation uses a log-distance path loss model calibrated to indoor NLOS (Non-Line-of-Sight) measurements:
+\[
+PL(d) = PL_0 + 10 \cdot n \cdot \log_{10}(d) + X_\sigma
+\]
+where $PL_0$ is the reference path loss, $n$ is the path loss exponent (3.5), and $X_\sigma$ represents log-normal shadowing with zero mean and standard deviation $\sigma = 8$ dB. This model determines the Packet Delivery Ratio (PDR) between any two nodes.
+
+\section{Federated Learning Implementation}
+
+The Federated Learning layer is implemented as a set of classes in Python, which can be ported to C++ for the ESP32.
+
+\begin{algorithm}[H]
+\caption{Federated Averaging with Differential Privacy}
+\label{alg:fedavg_dp}
+\begin{algorithmic}[1]
+\REQUIRE Local weights $w_i$, Privacy parameters $\epsilon, \delta$, Sensitivity $C$
+\STATE $\sigma \leftarrow \frac{C}{\epsilon} \sqrt{2 \ln(1.25/\delta)}$ \COMMENT{Calculate noise magnitude}
+\STATE $w_i^{noisy} \leftarrow w_i + \mathcal{N}(0, \sigma^2)$ \COMMENT{Add Gaussian noise}
+\STATE Broadcast $w_i^{noisy}$ to peers in cluster
+\STATE \textbf{On receiving $\{w_j^{noisy}\}$ from peers:}
+\STATE $w_{avg} \leftarrow \frac{1}{|K|} \sum_{j \in K} w_j^{noisy}$ \COMMENT{Average received weights}
+\STATE Update local model with $w_{avg}$
+\end{algorithmic}
+\end{algorithm}
+
+\section{Communication Protocol}
+
+The mesh communication is implemented using a custom gossip protocol.
+
+\begin{algorithm}[H]
+\caption{Gossip-based Block Propagation}
+\label{alg:gossip}
+\begin{algorithmic}[1]
+\REQUIRE Incoming Block $B$, Fanout $f$, Local Chain $C$
+\IF{$Hash(B)$ is in $seen\_cache$}
+    \STATE \textbf{Discard} $B$ \COMMENT{Prevent infinite loops}
+\ELSE
+    \STATE $seen\_cache.add(Hash(B))$
+    \IF{PoA\_Validate($B$, $C$) == APPROVE}
+        \STATE $C.append(B)$
+        \STATE $Peers \leftarrow SelectRandom(f, neighbors)$
+        \FORALL{$p \in Peers$}
+            \STATE Send $B$ to $p$
+        \ENDFOR
+    \ENDIF
+\ENDIF
+\end{algorithmic}
+\end{algorithm}
+
+\section{Summary}
+
+The implementation successfully bridges the gap between hardware-constrained execution and large-scale simulation. By using the same cryptographic and consensus logic in both C++ and Python, the hybrid testbed provides a consistent environment for evaluating the system. The next chapter will present the results obtained from this implementation.

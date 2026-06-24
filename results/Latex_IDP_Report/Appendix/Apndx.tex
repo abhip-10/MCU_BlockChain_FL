@@ -1,0 +1,112 @@
+\chapter{Code}
+
+\section{Dataset Generation using XTTS-v2}
+
+The following Python script was used for generating the speech dataset using the XTTS-v2 multilingual text-to-speech model. The implementation mounts Google Drive, loads reference speaker audio samples, synthesizes speech samples from text prompts, and stores the generated dataset for further processing.
+
+\begin{tcblisting}{listing only,colback=gray!10!white, breakable, boxsep=0pt,top=1mm,bottom=1mm,left=1mm,right=1mm,
+listing options={
+language=Python,
+basicstyle=\small\ttfamily,
+keywordstyle=\color{blue},
+commentstyle=\color{gray},
+backgroundcolor=\color{gray!25},
+escapechar=!}}
+
+from google.colab import drive
+import os
+import torch
+from TTS.api import TTS
+from tqdm.notebook import tqdm
+
+# Mount Google Drive
+drive.mount('/content/drive', force_remount=True)
+
+DRIVE_BASE = "/content/drive/MyDrive"
+INPUT_FOLDER = os.path.join(DRIVE_BASE, "sample")
+TEXT_FILE_PATH = "/content/text.txt"
+OUTPUT_BASE = os.path.join(DRIVE_BASE, "output")
+
+os.makedirs(OUTPUT_BASE, exist_ok=True)
+
+# Select GPU if available
+device = "cuda" if torch.cuda.is_available() else "cpu"
+print(f"Running on: {device}")
+
+# Load XTTS-v2 model
+tts = TTS(
+    model_name="tts_models/multilingual/multi-dataset/xtts_v2",
+    gpu=(device == "cuda")
+).to(device)
+
+# Read text samples
+with open(TEXT_FILE_PATH, "r", encoding="utf-8") as f:
+    all_lines = [
+        line.strip().strip("'").strip('"')
+        for line in f.readlines()
+    ][:1000]
+
+# Process male speaker samples
+gender_targets = ['m']
+
+for gender in gender_targets:
+
+    gender_path = os.path.join(INPUT_FOLDER, gender)
+
+    speaker_files = sorted([
+        f for f in os.listdir(gender_path)
+        if f.lower().endswith('.wav')
+    ])
+
+    for wav_file in speaker_files:
+
+        ref_wav = os.path.join(gender_path, wav_file)
+        speaker_name = os.path.splitext(wav_file)[0]
+
+        speaker_out_dir = os.path.join(
+            OUTPUT_BASE,
+            gender,
+            speaker_name
+        )
+
+        os.makedirs(speaker_out_dir, exist_ok=True)
+
+        pbar = tqdm(
+            total=len(all_lines),
+            desc=f"Generating {speaker_name}",
+            unit="line"
+        )
+
+        for idx, text in enumerate(all_lines):
+
+            if not text:
+                pbar.update(1)
+                continue
+
+            output_path = os.path.join(
+                speaker_out_dir,
+                f"{idx}.wav"
+            )
+
+            if os.path.exists(output_path):
+                pbar.update(1)
+                continue
+
+            try:
+                tts.tts_to_file(
+                    text=text,
+                    speaker_wav=ref_wav,
+                    file_path=output_path,
+                    language="en"
+                )
+
+            except Exception as e:
+                print(f"Error at line {idx}: {e}")
+
+            pbar.update(1)
+
+        pbar.close()
+
+print("Dataset generation completed successfully.")
+
+\end{tcblisting}

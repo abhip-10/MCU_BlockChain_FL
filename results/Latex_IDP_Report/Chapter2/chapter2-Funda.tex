@@ -1,0 +1,115 @@
+\chapter{Literature Review and Fundamentals}
+
+This chapter surveys the theoretical foundations and state of the art across the five domains underlying this project: LoRa communication, mesh networking, blockchain data integrity, federated learning, and wearable physiological sensing.
+
+% =========================================================
+\section{LoRa Physical Layer}
+
+LoRa (Long Range) uses \textbf{Chirp Spread Spectrum (CSS)} modulation, developed by Semtech, in which each symbol is a linearly swept chirp across bandwidth $B$. The processing gain $PG = 10\log_{10}(2^{SF})$~dB allows the receiver to detect signals several dB below the noise floor, and signals at different spreading factors are mutually orthogonal \cite{Semtech2019, Augustin2016}. Three parameters govern performance:
+
+\begin{table}[h]
+\centering
+\caption{LoRa air-interface configurations and resulting characteristics}
+\label{tab:lora_params}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{ccccc}
+\hline
+\textbf{SF} & \textbf{BW (kHz)} & \textbf{CR} & \textbf{Bit Rate (bps)} & \textbf{Sensitivity (dBm)} \\
+\hline
+7  & 125 & 4/5 & 5469 & $-123$ \\
+9  & 125 & 4/5 & 1758 & $-129$ \\
+10 & 125 & 4/8 & 610  & $-132$ \\
+12 & 125 & 4/8 & 183  & $-137$ \\
+\hline
+\end{tabular}
+\end{table}
+
+This project uses SF10/BW125/CR4-8, giving $-132$~dBm sensitivity and a link budget of $\approx$154~dB. Path loss is modelled by Gudmundson log-normal shadowing \cite{Gudmundson1991}:
+\begin{equation}
+PL(d) = PL(d_0) + 10n\log_{10}\!\left(\frac{d}{d_0}\right) + X_\sigma, \quad X_\sigma \sim \mathcal{N}(0,\sigma^2)
+\end{equation}
+with $n \approx 2.75$ and $\sigma \approx 9.5$~dB for urban 433~MHz deployments, yielding reliable links at 200--1000~m indoors.
+
+\textbf{LoRaWAN vs. P2P LoRa.} LoRaWAN routes all traffic through internet-connected gateways, making it incompatible with infrastructure-denied scenarios. This project uses P2P LoRa directly on the physical layer, with a custom MAC and broadcast mesh topology \cite{Centenaro2016, Bor2016}.
+
+\begin{table}[h]
+\centering
+\caption{LPWAN technology comparison}
+\label{tab:lpwan_comparison}
+\renewcommand{\arraystretch}{1.2}
+\begin{tabular}{lcccc}
+\hline
+\textbf{Feature} & \textbf{LoRa P2P} & \textbf{Sigfox} & \textbf{NB-IoT} & \textbf{Zigbee} \\
+\hline
+Max Range       & $>$15~km  & $>$40~km  & $<$10~km  & $<$100~m \\
+Data Rate       & 0.3--27~kbps & 100~bps & 250~kbps & 250~kbps \\
+Infrastructure  & None       & Cloud     & Cellular  & Coordinator \\
+Decentralised?  & \textbf{Yes} & No      & No        & Partial \\
+Battery Life    & Years      & Years     & Years     & Months \\
+\hline
+\end{tabular}
+\end{table}
+
+LoRa P2P uniquely combines kilometre-scale range, true decentralisation, and bidirectional communication at coin-cell power budgets, making it the only viable physical layer for the target scenario \cite{Raza2017}.
+
+% =========================================================
+\section{Mesh Networking for Disaster Response}
+
+Wireless mesh and Mobile Ad-hoc Networks (MANETs) achieve self-organising, infrastructure-free connectivity through distributed routing \cite{Gomez2012}. Reactive protocols (AODV) are preferred over proactive ones (OLSR) for low-bandwidth LoRa networks with duty-cycle constraints, as they eliminate continuous route advertisement overhead. Mekki et al. \cite{Mekki2019} demonstrated a LoRa P2P mesh achieving 94\% PDR at 200~m spacing in urban environments with sub-30-second convergence after topology changes, adopting a flood-with-duplicate-suppression MAC—the same design principle used in this project.
+
+% =========================================================
+\section{Blockchain for IoT Data Integrity}
+
+Nakamoto's blockchain \cite{Nakamoto2008} demonstrated that mutually distrusting peers can maintain a tamper-evident ledger without a central authority via cryptographic hash chaining. For IoT, this provides provable data integrity: any modification to a block invalidates all subsequent hashes, detectable by any peer \cite{Kshetri2017}.
+
+The block structure used in this project (124 bytes packed) contains: sender ID, block type, heartRate, SpO2, accelerometer readings ($a_x, a_y, a_z$), fall flag, anomaly score, 8 FL weights (32 bytes), 16-byte payload, prevHash[32], and hash[32]. The hash chain is:
+\begin{equation}
+h_i = \text{SHA-256}(\text{data}_i \| h_{i-1})
+\end{equation}
+
+\textbf{Proof-of-Authority (PoA)} is chosen over PoW and PoS because it requires zero additional computation (no mining), has deterministic finality, and is appropriate for small networks of known, accountable participants. PoW's computational cost ($\sim$$10^{22}$ SHA-256 operations per Bitcoin block) is infeasible on an ESP32-C3; PoS requires a token economy irrelevant to this closed mesh \cite{Puthal2018, deAngelis2018}. SHA-256 is implemented via the mbedTLS library bundled with ESP-IDF, completing in $\approx$1.2~ms at 160~MHz \cite{mbedTLS2023}.
+
+% =========================================================
+\section{Federated Learning for Privacy-Preserving Intelligence}
+
+McMahan et al.'s \textbf{FedAvg} \cite{McMahan2017} trains a shared model without raw data leaving each device. Each node $k$ trains locally and the global model is averaged:
+\begin{equation}
+w^{t+1} = \sum_{k=1}^{K} \frac{n_k}{n} w_k^{t+1}
+\end{equation}
+
+For two-node P2P, convergence is geometric: $\|w_1^T - w_2^T\|_2 = (1/2)^T \|w_1^0 - w_2^0\|_2$, validated in the M4 simulation. Weight updates can still reveal training data through gradient inversion attacks \cite{Zhu2019}, so \textbf{Differential Privacy} \cite{Dwork2006, Abadi2016} is applied. The Gaussian mechanism adds noise before transmission:
+\begin{equation}
+\tilde{w}_k = w_k + \mathcal{N}(0, \sigma^2 C^2 \mathbf{I})
+\end{equation}
+providing $(\varepsilon,\delta)$-DP with a formal bound on per-individual leakage. On the ESP32-C3, Gaussian samples are generated via the Box-Muller transform applied to \texttt{esp\_random()} hardware entropy. The 8-weight logistic regression model (32 bytes) fits entirely within the 124-byte block, so LoRa time-on-air (1.8~s at SF10) dominates over weight vector size, justifying full-precision (32-bit) exchange \cite{Konecny2016}.
+
+% =========================================================
+\section{Wearable Sensor Systems}
+
+\textbf{MPU6050 IMU.} The TDK MPU6050 provides 16-bit 3-axis accelerometry and gyroscopy via I$^2$C. Fall detection uses a two-phase threshold: freefall ($\|a\|_2 < 0.4g$) followed within 500~ms by impact ($\|a\|_2 > 2.5g$) \cite{Bourke2006}. This project uses this threshold approach rather than an LSTM (97.83\% sensitivity \cite{Nho2020}) because model size ($>$hundreds of KB) exceeds ESP32-C3 SRAM.
+
+\textbf{MAX30102 PPG.} The Maxim MAX30102 uses red (660~nm) and IR (940~nm) LEDs with a 18-bit photodetector for simultaneous SpO2 and heart rate measurement. SpO2 is derived from the ratio-of-ratios $R = (AC_{660}/DC_{660})/(AC_{940}/DC_{940})$ via the empirical curve $SpO_2 \approx 110 - 25R$, achieving $\pm$2--3\% accuracy \cite{Maxim2018}. Heart rate accuracy for wearable PPG sensors of this class is 3.5~BPM mean absolute error, adequate for detecting tachycardia ($>$100~BPM) and hypoxaemia (SpO2 $<$94\%) \cite{Bruns2021}.
+
+% =========================================================
+\section{Related Work and Research Gaps}
+
+\textbf{LoRa public safety systems.} Zorbas et al. \cite{Zorbas2020} demonstrated LoRa RSSI-based firefighter localisation achieving 70\% room-level accuracy. Sanchez-Iborra et al. \cite{SanchezIborra2018} used LoRaWAN with UAV relay for search-and-rescue. However, both systems require gateway infrastructure.
+
+\textbf{Blockchain-secured IoT.} Dorri et al. \cite{Dorri2017} and Botta et al. \cite{Botta2021} integrated blockchain with IoT/LoRaWAN respectively, but delegated blockchain operations to gateway-class hardware (Raspberry Pi), not embedded MCUs.
+
+\textbf{FL in wearable health monitoring.} Rahman et al. \cite{Rahman2021} achieved 91\% accuracy on federated IMU-based activity recognition across 10 clients with non-IID data, confirming FL's robustness to physiological data heterogeneity.
+
+\subsection{Research Gaps Addressed by This Work}
+
+\textbf{Gap 1 — Infrastructure independence:} All existing LoRa-blockchain integrations rely on LoRaWAN gateways. No prior work demonstrates fully decentralised LoRa P2P mesh with on-device blockchain and zero internet dependency.
+
+\textbf{Gap 2 — On-MCU blockchain:} Prior lightweight IoT blockchain systems run on gateway devices, not sub-\$5 microcontrollers. This project demonstrates SHA-256 chaining and tamper detection entirely on the ESP32-C3.
+
+\textbf{Gap 3 — On-device FL over LoRa:} FedAvg research assumes WiFi/4G substrates. Executing FedAvg over a LoRa P2P channel with hardware-entropy DP noise is novel.
+
+\textbf{Gap 4 — Integrated wearable platform:} No prior published work simultaneously integrates physiological sensing, fall detection, blockchain integrity, and FL over LoRa in a single wearable node targeting first-responder constraints.
+
+% =========================================================
+\section{Summary}
+
+LoRa CSS modulation provides kilometre-scale infrastructure-independent communication. P2P LoRa mesh extends this to multi-hop topologies without gateways. SHA-256 PoA blockchain provides tamper-evident data integrity at negligible MCU cost. FedAvg with Gaussian DP enables collaborative anomaly detection without raw data exchange. MPU6050 and MAX30102 provide the physiological sensing modalities for fall detection and cardiovascular monitoring. The literature identifies a clear gap in fully integrated, infrastructure-independent systems combining all three technologies on commodity microcontrollers—which this project directly addresses.

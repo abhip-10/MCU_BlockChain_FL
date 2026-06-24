@@ -1,0 +1,132 @@
+\documentclass[12pt,oneside,a4paper]{book}
+
+\input{./AuxFiles/Packages}
+
+\title{Decentralized LoRa Mesh Network for Wearable Public Safety using Blockchain and Federated Learning}
+\subCode{IDP}
+\Department[AI\&ML]{Artificial Intelligence and Machine Learning}
+\academicYear{2025-26}
+
+\IDPProject
+
+\MastersIn[B.E]{Bachelor of Engineering}
+\pgProgramName{Artificial Intelligence and Machine Learning}
+
+\stuNameA{Kunal Rathod}
+\stuUSNA{1RV23ME060}
+\stuNameB{Abhinav Potharaju}
+\stuUSNB{1RV23AI135}
+\stuNameC{Akshad Jagdale}
+\stuUSNC{1RV23ME017}
+\stuNameD{Ibrahim Bagwan}
+\stuUSND{1RV24AI404}
+
+\guideNameA{Prof. Saraswathi Govind Datar}
+\guideDesignationA{Professor}
+\guideDeptA[CSE]{Computer Science and Engineering}
+\guideOrgA{RV College of Engineering}
+
+\panelMemberNameA{Prof. Savithri Kulkarni}
+\panelMemberDesigA{Assistant Professor}
+\panelMemberDeptA[CSE]{Computer Science and Engineering}
+\panelMemberNameB{Dr. Shanta Rangaswamy}
+\panelMemberDesigB{Professor \& Head}
+\panelMemberDeptB[CSE]{Computer Science and Engineering}
+
+\projectCoOrdNameA{Dr. Prapulla S B}
+\projectCoOrdDesigA{Associate Professor}
+\projectCoOrdDeptA[CSE]{Computer Science and Engineering}
+
+\HOD{Dr. Shanta Rangaswamy}
+\Principal{Dr. K. N. Subramanya}
+\DeanAcademics{Dr. M.V. Renukadevi}
+\VicePrincipal{Dr. Geetha K S}
+
+\QRurl{}
+
+\newglossary[sym]{symbolList}{sym1}{sym2}{List of Symbols}
+\makeglossaries
+\loadglsentries{./AuxFiles/Glossaries}
+\renewcommand{\glspostdescription}{}
+
+\usepackage[backend=bibtex,style=ieee]{biblatex}
+\addbibresource{./AuxFiles/ProjectBib.bib}
+
+\usepackage{background}
+\backgroundsetup{scale=1, angle=0, firstpage = false, opacity=0.5, contents={
+\begin{tikzpicture}[remember picture, overlay]
+\node at ([yshift=0pt, xshift=0pt]current page.center){\includegraphics[width=0.6\textwidth]{Figures/RVlogoVecW}};
+\end{tikzpicture}
+}}
+
+\definecolor{coverGreen}{RGB}{161,214,165}
+
+\begin{document}
+\NoBgThispage
+\pagecolor{coverGreen}
+\maketitle
+\pagecolor{white}
+\newpage
+\ifDrf
+\else
+\begin{spacing}{1.5}
+\input{./CoverPages/Certificate}
+
+\newpage
+\input{./CoverPages/Declaration}
+
+\newpage
+\input{./CoverPages/Ack}
+
+\newpage
+\pagenumbering{roman}
+
+\chapter*{Abstract}
+\input{./CoverPages/Abstract}
+
+\end{spacing}
+\newpage
+\pagestyle{fplain}
+\begin{spacing}{1.5}
+\tableofcontents	
+\end{spacing}
+\newpage
+\begin{spacing}{1.5}
+\cleardoublepage
+\addcontentsline{toc}{chapter}{List of Figures}
+\listoffigures	
+\end{spacing}
+\newpage
+\begin{spacing}{1.5}
+\cleardoublepage
+\addcontentsline{toc}{chapter}{List of Tables}
+\listoftables	
+\end{spacing}
+
+\printglossary[type=\acronymtype, title= Abbreviations, toctitle=Abbreviations]
+\printglossary[type=symbolList, title= List of Symbols, toctitle=List of Symbols]
+\fi
+\mainmatter
+\pagestyle{mplain}
+\glsresetall
+\begin{spacing}{1.5}
+
+\input{./Chapter1/chapter1-Intro}
+\input{./Chapter2/chapter2-Funda}
+\input{./Chapter3/chapter3-design}
+\input{./Chapter4/chapter4-implement}
+\input{./Chapter5/chapter5-result}
+\input{./Chapter6/chapter6-conclution}
+
+\appendix
+\input{./Appendix/Apndx}
+
+\backmatter
+\ifDrf
+\else
+\clearpage
+\addcontentsline{toc}{chapter}{Bibliography}
+\printbibliography%
+\fi
+\end{spacing}
+\end{document}
