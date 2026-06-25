@@ -22,17 +22,19 @@
 Learning for First-Responder Wearable Monitoring}
 
 \author{Kunal~Rathod,~Abhinav~Potharaju,~Akshad~Jagdale,~Ibrahim~Bagwan,~and~Saraswathi~Govind~Datar%
+\thanks{Manuscript received. Date of publication pending.
+This work was carried out at RV College of Engineering, Bengaluru, India.}%
 \thanks{K. Rathod, A. Potharaju, A. Jagdale, and I. Bagwan are with the
 Department of Artificial Intelligence and Machine Learning, RV College of
 Engineering, Bengaluru 560059, India
-(e-mail: kunalrathod.me23@rvce.edu.in;
-abhinavsrinivas.ai23@rvce.edu.in;
-akshadamolj.me23@rvce.edu.in;
-ibagwan.ai24@rvce.edu.in).}%
-\thanks{S. G. Datar is with the Department of Computer Science and
-Engineering, RV College of Engineering, Bengaluru 560059, India
-(e-mail: saraswathigd@rvce.edu.in).
-(Corresponding author: Saraswathi Govind Datar.)}}
+(e-mail: \texttt{kunalrathod.me23@rvce.edu.in};
+\texttt{abhinavsrinivas.ai23@rvce.edu.in};
+\texttt{akshadamolj.me23@rvce.edu.in};
+\texttt{ibagwan.ai24@rvce.edu.in}).}%
+\thanks{S. G. Datar (Corresponding author) is with the Department of
+Computer Science and Engineering, RV College of Engineering,
+Bengaluru 560059, India
+(e-mail: \texttt{saraswathigd@rvce.edu.in}).}}
 
 \markboth{IEEE ACCESS}%
 {Rathod \MakeLowercase{\textit{et al.}}: Decentralized LoRa Mesh with
@@ -228,11 +230,11 @@ accuracy, confirming FL robustness to physiological heterogeneity
 
 \begin{figure*}[t]
 \centering
+\resizebox{\textwidth}{!}{%
 % ── TikZ System Architecture Diagram ──────────────────────────────────────
 \begin{tikzpicture}[
   >=stealth,
   font=\small,
-  every node/.style={align=center},
   sensor/.style={draw, fill=blue!10, draw=blue!50!black,
     rounded corners=3pt, minimum width=2.0cm,
     minimum height=0.70cm, text width=1.9cm},
@@ -352,7 +354,8 @@ accuracy, confirming FL robustness to physiological heterogeneity
    $\rightarrow$ wired (I$^2$C / SPI / USB-CDC)~~
    - - - - $\leftrightarrow$ - - - - wireless LoRa 433\,MHz};
 
-\end{tikzpicture}
+\end{tikzpicture}%
+}% end \resizebox
 % ── end TikZ ─────────────────────────────────────────────────────────────────
 \caption{System architecture. Two physical ESP32-C3 wearable nodes (N01,
 N02) run three co-designed software layers: LoRa P2P mesh, SHA-256 PoA
